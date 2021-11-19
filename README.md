@@ -16,5 +16,6 @@ usage:
     - <filename.md>: no filepath needed unless you have several files with same name
 
 Only tesed on Linux!
+
     - script uses `~/export_<filename>` as output-foldername, so maybe have to change for windows...
 
