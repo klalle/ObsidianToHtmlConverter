@@ -11,7 +11,9 @@ The script has 1 option:
 Run this script from the root of obsidian vault
 
 usage: 
-`python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => html-export>`
+```
+python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => html-export>
+```
 
     - "<filename.md>" no filepath needed unless you have several files with same name
 
