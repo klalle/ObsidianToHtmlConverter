@@ -9,7 +9,9 @@ The script has 1 option:
     - The script puts an index.html-file in the root of the exported vault that is a direct link to your exported file.md.html for easily access
 
 Run this script from the root of obsidian vault
-usage: `python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => html-export>`
+
+usage: 
+`python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => html-export>`
     - `<filename.md>`: no filepath needed unless you have several files with same name
 
 Only tesed on Linux!
