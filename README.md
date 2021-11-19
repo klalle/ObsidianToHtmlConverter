@@ -12,8 +12,7 @@ Run this script from the root of obsidian vault
 
 usage: 
 `python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => html-export>`
-    
-    - `<filename.md>`: no filepath needed unless you have several files with same name
+    - <filename.md>: no filepath needed unless you have several files with same name
 
 Only tesed on Linux!
     - script uses `~/export_<filename>` as output-foldername, so maybe have to change for windows...
