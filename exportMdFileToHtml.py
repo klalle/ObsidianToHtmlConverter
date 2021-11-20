@@ -116,9 +116,9 @@ def findCheckboxes(line):
 def findCodeBlock(line, InCodeBlock):
     if("```" in line):
         if(not InCodeBlock):
-            line = '<div class="codeblock"><xmp style="tab-size: 4;">' + line
+            line = '<pre class="codeblock"><code style="tab-size: 4;" class="' + line.split("```")[-1].replace("shell\n","sh").replace('\n',"") + ' codeblock">' + line.replace("```","")
         else:
-            line = line + '</xmp></div>'
+            line = line.replace("```","") + '</pre></code>'
         InCodeBlock = not InCodeBlock
     return (line, InCodeBlock)
 
@@ -152,7 +152,7 @@ def findHeadings(line):
 
 def insertParagraphs(line):
     line = line.replace("\n","")
-    if('<h' not in line and '</xmp>' not in line):
+    if('<h' not in line and '</pre></code>' not in line):
         line = "<p>" + line + "</p>"
     return line + "\n"
 
@@ -168,6 +168,13 @@ def readFilesRecursive(path):
             outputfile.write("<html>\n")
             outputfile.write("<head>\n")
             outputfile.write('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>\n')
+            
+            #code-highlighting with highlight.js:
+            outputfile.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css">\n')
+            outputfile.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>\n')
+            outputfile.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/languages/go.min.js"></script>\n')
+            outputfile.write('<script>hljs.initHighlightingOnLoad();</script>\n')
+            
             outputfile.write("<style>\n")
             outputfile.write("\timg { max-width:900px; }\n")
             outputfile.write("\t.codeblock { \n\tbackground: #B0B0B0; padding:1px 10px 0px 10px; border-radius: 5px; overflow-x:auto; \n\t}\n")
