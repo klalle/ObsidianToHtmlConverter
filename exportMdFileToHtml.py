@@ -73,7 +73,8 @@ def copyFileToExport(fileToFind, currentFile, traverse=False):
 def findMdFile(line, currentFile, convertHtml=True):
     pattern = re.compile(r"(?<!!)\[\[([^\]]*)\]\]")
     for (file) in re.findall(pattern, line):
-        fileOnly = file.split("#")[0] #link can also be header..
+        fileOnly = file.split("#")[0] 
+            
         ancor = ""
         if(len(file.split("#"))>1):
             ancor = "#" + file.split("#")[1].replace(" ","_").replace("(","").replace(")","")
@@ -145,10 +146,16 @@ def findBolds(line):
     return line
 
 def findHeadings(line):
-    pattern = re.compile(r"^([\t]*)[\- ]*([#]{1,})(.*)")
+    pattern = re.compile(r"^([\t]*)[\- ]*([#]{1,}) ([^<]{1,})")
+    linkHeading = re.compile(r"^([\t]*)[\- ]*([#]{1,}) (<a href.*>([^\/]*)<\/a>)(.*)")
     
+    for (tab, heading, link, text, aftertext) in re.findall(linkHeading, line):
+        line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + (
+            (text + aftertext).strip().replace(" ","_").replace("(","").replace(")","").replace("#","_") + '">' 
+            + link + aftertext + '</h' + str(len(heading)) + '>\n')
+
     for (tab, heading, text) in re.findall(pattern, line):
-        line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + text.strip().replace(" ","_").replace("(","").replace(")","") + '">' + text + '</h' + str(len(heading)) + '>\n'
+        line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + text.strip().replace(" ","_").replace("(","").replace(")","")  + '">' + text + '</h' + str(len(heading)) + '>\n'
     return line
 
 def findInlineCodeBlocks(line):
