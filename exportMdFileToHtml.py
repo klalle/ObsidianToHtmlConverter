@@ -5,6 +5,7 @@ from pathlib import Path
 import pathlib
 import sys
 import re
+import html
 
 if(len(sys.argv)!=2 and len(sys.argv)!=3):
     print("Wrong number of arguments!\nUsage: python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => creates a html-export in export vault>")
@@ -196,6 +197,8 @@ def readFilesRecursive(path):
                     line = findHeadings(line)
                     line = findListItems(line)
                     line = insertParagraphs(line)
+                elif("<code" not in line):
+                    line = html.escape(line)
                 outputfile.write(line)
             outputfile.write("</div>\n")
 
