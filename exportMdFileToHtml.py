@@ -73,13 +73,16 @@ def copyFileToExport(fileToFind, currentFile, traverse=False):
 def findMdFile(line, currentFile, convertHtml=True):
     pattern = re.compile(r"(?<!!)\[\[([^\]]*)\]\]")
     for (file) in re.findall(pattern, line):
-        file = file.split("#")[0] #link can also be header..
-        newFile = copyFileToExport(file + '.md', currentFile, traverse=True) 
+        fileOnly = file.split("#")[0] #link can also be header..
+        ancor = ""
+        if(len(file.split("#"))>1):
+            ancor = "#" + file.split("#")[1].replace(" ","_").replace("(","").replace(")","")
+        newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
         if(convertHtml):
             if(len(newFile)>0):
-                line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + '">' + newFile.split("/")[-1].replace(".md","") + '</a>')
+                line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.split("/")[-1].replace(".md","") + ancor + '</a>')
             else: ##self ref
-                line = line.replace('[[' + file + ']]', '<a href="./' + file + ".md.html" + '">' + file.split("/")[-1].replace(".md","") + '</a>')
+                line = line.replace('[[' + file + ']]', '<a href="./' + fileOnly + ".md.html" +  ancor + '">' + fileOnly.split("/")[-1].replace(".md","") + ancor + '</a>')
     return line
 
 def findImages(line, currentFile, convertHtml=True):
@@ -145,7 +148,7 @@ def findHeadings(line):
     pattern = re.compile(r"^([\t]*)[\- ]*([#]{1,})(.*)")
     
     for (tab, heading, text) in re.findall(pattern, line):
-        line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;">' + text + '</h' + str(len(heading)) + '>\n'
+        line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + text.strip().replace(" ","_").replace("(","").replace(")","") + '">' + text + '</h' + str(len(heading)) + '>\n'
     return line
 
 def findInlineCodeBlocks(line):
