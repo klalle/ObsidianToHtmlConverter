@@ -181,8 +181,11 @@ def readFilesRecursive(path):
             outputfile.write("\tcode {\n font-family: monospace; font-size: inherit; color: #202020; \n\t}\n")
             outputfile.write("</style>\n")
             outputfile.write("</head>\n")
+            
             outputfile.write('<body style="background: #F0F0F0;">\n')
-            outputfile.write('<div style="width:1000px; margin: 0 auto; padding:20px; text-align:left; background-color: #DCDCDC; border-radius: 5px;">\n')
+            outputfile.write('<div style="margin: 0 auto; width:1380px;  position: relative;" >\n')
+            
+            outputfile.write('<div style="width:1000px; padding:20px; margin:0px; z-index: 5; text-align:left; background-color: #DCDCDC; border-radius: 5px; position:absolute; top:0; left:340px;">\n')
             InCodeBlock = False
             for line in data:
                 (line, InCodeBlock) = findCodeBlock(line, InCodeBlock)
@@ -197,6 +200,17 @@ def readFilesRecursive(path):
                     line = findListItems(line)
                     line = insertParagraphs(line)
                 outputfile.write(line)
+            outputfile.write("</div>\n")
+
+            #Find links on this 
+            outputfile.write('<div style="width:340px; padding-top: 20px;; background-color: #DCDCDC; height: 400px; position:absolute; top:0; left:0; overflow:auto;">\n')
+            outputfile.write("<ul>")
+            for f in filesAllreadyCopied:
+                outputfile.write('<li>' + '<a href="./' + findRelPath(f, path) + ".html" + '">' + str(f).replace(".md","") + '</a>' + '</li>\n')
+            outputfile.write("</ul>")
+            outputfile.write("</div>\n")
+            
+            outputfile.write("</div>\n")
             outputfile.write("</html>\n")
             outputfile.write("</body>\n")
     else:
