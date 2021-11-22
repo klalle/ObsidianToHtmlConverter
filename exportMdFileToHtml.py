@@ -151,7 +151,7 @@ def findHeadings(line):
 def insertParagraphs(line):
     line = line.replace("\n","")
     if('<h' not in line and '</pre></code>' not in line):
-        line = "<p>" + line + "</p>"
+        line = "<p>" + html.escape(line) + "</p>"
     return line + "\n"
 
 def readFilesRecursive(path):
