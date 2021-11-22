@@ -148,6 +148,18 @@ def findHeadings(line):
         line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;">' + text + '</h' + str(len(heading)) + '>\n'
     return line
 
+def findInlineCodeBlocks(line):
+    pattern = re.compile(r"`([^`]*)`")
+    for (text) in re.findall(pattern, line):
+        line = line.replace('`' + text + '`', '<code class="inlineCoed">' + html.escape(text) + '</code>')
+    return line
+
+def findInlineCodeBlockswrongly(line):
+    pattern = re.compile(r"```([^`]*)```")
+    for (text) in re.findall(pattern, line):
+        line = line.replace('```' + text + '```', '<code class="inlineCoed">' + html.escape(text) + '</code>')
+    return line
+
 def insertParagraphs(line):
     line = line.replace("\n","")
     if('<h' not in line and '</pre></code>' not in line):
@@ -177,6 +189,7 @@ def readFilesRecursive(path):
             outputfile.write("\timg { max-width:900px; }\n")
             outputfile.write("\t.codeblock { \n\tbackground: #B0B0B0; padding:1px 10px 0px 10px; border-radius: 5px; overflow-x:auto; \n\t}\n")
             outputfile.write("\tcode {\n font-family: monospace; font-size: inherit; color: #202020; \n\t}\n")
+            outputfile.write("\t.inlineCoed {\n font-family: monospace; font-size: inherit; color: #202020; \n\t}\n")
             outputfile.write("</style>\n")
             outputfile.write("</head>\n")
             
@@ -186,11 +199,16 @@ def readFilesRecursive(path):
             outputfile.write('<div style="width:1000px; padding:20px; margin:0px; z-index: 5; text-align:left; background-color: #DCDCDC; border-radius: 5px; position:absolute; top:0; left:340px;">\n')
             InCodeBlock = False
             for line in data:
+                if(not InCodeBlock):
+                    line = findInlineCodeBlockswrongly(line)
+
                 (line, InCodeBlock) = findCodeBlock(line, InCodeBlock)
+                
                 if(not InCodeBlock):
                     line = findMdFile(line, currentFile=path)
                     (line, a) = findImages(line, currentFile=path)
                     antalAssets += a
+                    line = findInlineCodeBlocks(line)
                     line = findExternalLinks(line)
                     line = findCheckboxes(line)
                     line = findBolds(line)
