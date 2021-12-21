@@ -6,6 +6,8 @@ import pathlib
 import sys
 import re
 import html
+from urllib.parse import unquote
+
 
 if(len(sys.argv)!=2 and len(sys.argv)!=3):
     print("Wrong number of arguments!\nUsage: python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => creates a html-export in export vault>")
@@ -80,7 +82,7 @@ def findMdFile(line, currentFile, convertHtml=True):
             ancor = "#" + file.split("#")[1].replace(" ","_").replace("(","").replace(")","")
         newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
         if(convertHtml):
-            if(len(newFile)>0):
+            if(newFile and len(newFile)>0):
                 line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.split("/")[-1].replace(".md","") + ancor + '</a>')
             else: ##self ref
                 line = line.replace('[[' + file + ']]', '<a href="./' + fileOnly + ".md.html" +  ancor + '">' + fileOnly.split("/")[-1].replace(".md","") + ancor + '</a>')
@@ -97,6 +99,24 @@ def findImages(line, currentFile, convertHtml=True):
             if('|' in asset):
                 style = style + 'width:' + asset.split('|')[1] + 'px; border-radius: 3px;'
             line = line.replace("![[" + asset + "]]", '<img src="./' + img + '" alt="' + img.split("/")[-1] + '" style="' + style + '" >')
+    
+    pattern = re.compile(r"!\[(.*)\]\((.*)\)")
+    for size,imglink in re.findall(pattern,line):
+        antalAssets += 1
+        if("http" not in imglink):
+            originallink = imglink
+            imglink = str(copyFileToExport(unquote(imglink.split("/")[-1]), currentFile))
+            if(convertHtml):
+                style = 'border-radius: 4px;"'
+                if('|' in imglink):
+                    style = style + 'width:' + imglink.split('|')[1] + 'px; border-radius: 3px;'
+                line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.split("/")[-1] + '" style="' + style + '" >')
+        else:
+            if(convertHtml):
+                style = 'border-radius: 4px;"'
+                line = line.replace("![" + size + "](" + imglink + ")", '<img src="' + imglink + '" style="' + style + '" >')
+    
+    
     return (line, antalAssets)
 
 def findExternalLinks(line):
