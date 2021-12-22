@@ -49,8 +49,8 @@ def findRelPath(linkPath, currentFile):
     pLink = Path(linkPath)
     pCurrRelRoot = str(pCurr.relative_to(pRoot))
     pLinkRelRoot = str(pLink.relative_to(pRoot))
-    pLinkRelRootList = pLinkRelRoot.split("/")
-    for parent in pCurrRelRoot.split("/"):
+    pLinkRelRootList = pLinkRelRoot.replace("\\","/").split("/")
+    for parent in pCurrRelRoot.replace("\\","/").split("/"):
         if(parent == pLinkRelRootList[0]):
             del pLinkRelRootList[0]
         else:
@@ -197,13 +197,13 @@ def insertParagraphs(line):
     return line + "\n"
 
 def readFilesRecursive(path):
-    with open(path,"r") as readfile:
+    with open(path,"r",encoding='utf-8') as readfile:
         data = readfile.readlines()
 
     antalAssets = 0
     
     if(exportToHtml):
-        with open(os.path.join(exportDir,str(path) + ".html"), 'w') as outputfile:
+        with open(os.path.join(exportDir,str(path) + ".html"), 'w', encoding='utf-8') as outputfile:
             outputfile.write("<!DOCTYPE html>\n")
             outputfile.write("<html>\n")
             outputfile.write("<head>\n")
@@ -249,7 +249,7 @@ def readFilesRecursive(path):
                     line = html.escape(line)
                 outputfile.write(line)
             outputfile.write("</div>\n")
-
+            b = str(findRelPath(".",path))
             outputfile.write('<div style="width:345px; padding-top: 20px;; position:absolute; top:0; left:0; overflow:auto;">\n')
             outputfile.write('\t<iframe src="' + str(findRelPath(".",path))[:-1] + 'treeview.html" width="340px" frameBorder="0" height="900px"></iframe>\n')
             outputfile.write("</div>\n")
