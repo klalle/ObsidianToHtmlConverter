@@ -83,9 +83,9 @@ def findMdFile(line, currentFile, convertHtml=True):
         newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
         if(convertHtml):
             if(newFile and len(newFile)>0):
-                line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.split("/")[-1].replace(".md","") + ancor + '</a>')
+                line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.replace("\\","/").split("/")[-1].replace(".md","") + ancor + '</a>')
             else: ##self ref
-                line = line.replace('[[' + file + ']]', '<a href="./' + fileOnly + ".md.html" +  ancor + '">' + fileOnly.split("/")[-1].replace(".md","") + ancor + '</a>')
+                line = line.replace('[[' + file + ']]', '<a href="./' + fileOnly + ".md.html" +  ancor + '">' + fileOnly.replace("\\","/").split("/")[-1].replace(".md","") + ancor + '</a>')
     return line
 
 def findImages(line, currentFile, convertHtml=True):
@@ -98,19 +98,19 @@ def findImages(line, currentFile, convertHtml=True):
             style = 'border-radius: 4px;"'
             if('|' in asset):
                 style = style + 'width:' + asset.split('|')[1] + 'px; border-radius: 3px;'
-            line = line.replace("![[" + asset + "]]", '<img src="./' + img + '" alt="' + img.split("/")[-1] + '" style="' + style + '" >')
+            line = line.replace("![[" + asset + "]]", '<img src="./' + img + '" alt="' + img.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
     
     pattern = re.compile(r"!\[(.*)\]\((.*)\)")
     for size,imglink in re.findall(pattern,line):
         antalAssets += 1
         if("http" not in imglink):
             originallink = imglink
-            imglink = str(copyFileToExport(unquote(imglink.split("/")[-1]), currentFile))
+            imglink = str(copyFileToExport(unquote(imglink.replace("\\","/").split("/")[-1]), currentFile))
             if(convertHtml):
                 style = 'border-radius: 4px;"'
                 if('|' in imglink):
                     style = style + 'width:' + imglink.split('|')[1] + 'px; border-radius: 3px;'
-                line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.split("/")[-1] + '" style="' + style + '" >')
+                line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
         else:
             if(convertHtml):
                 style = 'border-radius: 4px;"'
@@ -288,17 +288,17 @@ if(exportToHtml):
         outputfile.write('<body style="background: #F0F0F0; ">\n')
         filesAllreadyCopied.sort()
         outputfile.write("<ul>")
-        for f in str(filesAllreadyCopied[0]).split("/"):
+        for f in str(filesAllreadyCopied[0]).replace("\\","/").split("/"):
             if('.md' in f):
                 outputfile.write('<li>' + '<a href="./' + str(filesAllreadyCopied[0]) + ".html" + '">' + str(f).replace(".md","") + '</a>' + '</li>\n')
             else:
                 outputfile.write('<li class="folderClass">' + str(f) + "</li>")
                 outputfile.write("<ul>")
-        lastFilePath = str(filesAllreadyCopied[0]).split("/")
+        lastFilePath = str(filesAllreadyCopied[0]).replace("\\","/").split("/")
         first = True
         for currFile in filesAllreadyCopied:
             if(not first):
-                for currFolder in str(currFile).split("/"):
+                for currFolder in str(currFile).replace("\\","/").split("/"):
                     if(len(lastFilePath) > 0 and currFolder == lastFilePath[0]):
                         del lastFilePath[0]
                     else:
@@ -310,10 +310,10 @@ if(exportToHtml):
                         else:
                             outputfile.write('<li class="folderClass">' + str(currFolder) + "</li>\n")
                             outputfile.write("<ul>\n")
-                lastFilePath = str(currFile).split("/")
+                lastFilePath = str(currFile).replace("\\","/").split("/")
             first = False
 
-        for i in str(filesAllreadyCopied[-1]).split("/"):
+        for i in str(filesAllreadyCopied[-1]).replace("\\","/").split("/"):
             outputfile.write("</ul>")
        
         outputfile.write("</body>\n")
