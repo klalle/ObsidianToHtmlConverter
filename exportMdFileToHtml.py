@@ -138,9 +138,9 @@ def findExternalLinks(line):
     return line
 
 def findLinkInText(line):
-    pattern = re.compile(r"(https{0,1}.*)[ \n]")
+    pattern = re.compile(r"[^\">\(](https{0,1}.*)[ \n]") #un-greedy?
     for (link) in re.findall(pattern, line):
-        line = line.replace(link,'<a href="' + link + '" target=”_blank”>' + link + "</a>")
+        line = line.replace(link,'<a href="' + link.strip() + '" target=”_blank”>' + link + "</a>")
     return line
 
 def findCheckboxes(line):
