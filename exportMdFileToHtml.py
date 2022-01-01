@@ -138,9 +138,8 @@ def findExternalLinks(line):
     return line
 
 def findLinkInText(line):
-    pattern = re.compile(r"[^\">\(](https{0,1}.*?)[ \n]") #?=>un-greedy
-    if "https://releases.ubuntu.com/20.04/ herunter" in line:
-        a=1
+    pattern = re.compile(r"((?<!(?:\"|\>|\())https{0,1}.*?)[ \n]") #?=>un-greedy, (?<!...) = negative look behind
+
     for (link) in re.findall(pattern, line):
         line = line.replace(link,'<a href="' + link.strip() + '" target=”_blank”>' + link + "</a>")
     return line
