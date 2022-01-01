@@ -1,5 +1,5 @@
 import  os
-from shutil import copyfile
+from shutil import copyfile, copyfileobj
 import shutil
 from pathlib import Path
 import pathlib
@@ -7,6 +7,9 @@ import sys
 import re
 import html
 from urllib.parse import unquote
+import urllib.request
+from random import seed,random,randint
+
 
 
 if(len(sys.argv)!=2 and len(sys.argv)!=3):
@@ -37,7 +40,8 @@ if os.path.exists(exportDir) and os.path.isdir(exportDir):
     shutil.rmtree(exportDir)
 destFile = os.path.join(exportDir,mainFileToExport)
 Path(os.path.dirname(destFile)).mkdir(parents=True, exist_ok=True)
-
+assetPath = os.path.join(exportDir,"attachments","test")
+Path(os.path.dirname(assetPath)).mkdir(parents=True, exist_ok=True)
 copyfile(mainFileToExport, destFile)
 filesAllreadyCopied = [mainFileToExport]
 
@@ -88,6 +92,7 @@ def findMdFile(line, currentFile, convertHtml=True):
                 line = line.replace('[[' + file + ']]', '<a href="./' + fileOnly + ".md.html" +  ancor + '">' + fileOnly.replace("\\","/").split("/")[-1].replace(".md","") + ancor + '</a>')
     return line
 
+seed(1)
 def findImages(line, currentFile, convertHtml=True):
     antalAssets = 0
     pattern = re.compile(r"!\[\[([^\]]*)\]\]")
@@ -103,18 +108,24 @@ def findImages(line, currentFile, convertHtml=True):
     pattern = re.compile(r"!\[(.*)\]\((.*)\)")
     for size,imglink in re.findall(pattern,line):
         antalAssets += 1
-        if("http" not in imglink):
-            originallink = imglink
-            imglink = str(copyFileToExport(unquote(imglink.replace("\\","/").split("/")[-1]), currentFile))
-            if(convertHtml):
+        if(convertHtml):
+            if("http" not in imglink):
+                originallink = imglink
+                imglink = str(copyFileToExport(unquote(imglink.replace("\\","/").split("/")[-1]), currentFile))
+                
                 style = 'border-radius: 4px;"'
                 if('|' in imglink):
                     style = style + 'width:' + imglink.split('|')[1] + 'px; border-radius: 3px;'
                 line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
-        else:
-            if(convertHtml):
+            else:
+                imgname = 'utl_download_' + str(randint(0,10000)) + imglink.split("/")[-1]
+                destFile = os.path.join(exportDir,"attachments",imgname)
+                with urllib.request.urlopen(imglink) as responese:
+                    with open(destFile,'wb') as fdest:
+                        copyfileobj(responese, fdest)
+                
                 style = 'border-radius: 4px;"'
-                line = line.replace("![" + size + "](" + imglink + ")", '<img src="' + imglink + '" style="' + style + '" >')
+                line = line.replace("![" + size + "](" + imglink + ")", '<img src="../attachments/' + imgname + '" style="' + style + '" >')
     
     
     return (line, antalAssets)
@@ -124,6 +135,12 @@ def findExternalLinks(line):
 
     for (text, link) in re.findall(pattern, line):
         line = line.replace("[" + text + "](" + link + ")",'<a href="' + link + '" target=”_blank”>' + text + "</a>")
+    return line
+
+def findLinkInText(line):
+    pattern = re.compile(r"(https{0,1}.*)[ \n]")
+    for (link) in re.findall(pattern, line):
+        line = line.replace(link,'<a href="' + link + '" target=”_blank”>' + link + "</a>")
     return line
 
 def findCheckboxes(line):
@@ -178,6 +195,9 @@ def findHeadings(line):
         line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + text.strip().replace(" ","_").replace("(","").replace(")","")  + '">' + text + '</h' + str(len(heading)) + '>\n'
     return line
 
+
+
+
 def findInlineCodeBlocks(line):
     pattern = re.compile(r"`([^`]*)`")
     for (text) in re.findall(pattern, line):
@@ -189,12 +209,17 @@ def findInlineCodeBlockswrongly(line):
     for (text) in re.findall(pattern, line):
         line = line.replace('```' + text + '```', '<code class="inlineCoed">' + html.escape(text) + '</code>')
     return line
-
 def insertParagraphs(line):
     line = line.replace("\n","")
     if('<h' not in line and '</pre></code>' not in line):
         line = "<p>" + line + "</p>"
     return line + "\n"
+
+def findLines(line):
+    if  '---' in line:
+        line = "<hr>"
+    return line + "\n"
+
 
 def readFilesRecursive(path):
     with open(path,"r",encoding='utf-8') as readfile:
@@ -235,6 +260,7 @@ def readFilesRecursive(path):
                 (line, InCodeBlock) = findCodeBlock(line, InCodeBlock)
                 
                 if(not InCodeBlock):
+                    line = findLines(line)
                     line = findMdFile(line, currentFile=path)
                     (line, a) = findImages(line, currentFile=path)
                     antalAssets += a
@@ -244,7 +270,9 @@ def readFilesRecursive(path):
                     line = findBolds(line)
                     line = findHeadings(line)
                     line = findListItems(line)
+                    line = findLinkInText(line)
                     line = insertParagraphs(line)
+                    
                 elif("<code" not in line):
                     line = html.escape(line)
                 outputfile.write(line)
