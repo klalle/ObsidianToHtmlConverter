@@ -12,8 +12,8 @@ from random import seed,random,randint
 
 
 
-if(len(sys.argv)!=2 and len(sys.argv)!=3):
-    print("Wrong number of arguments!\nUsage: python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => creates a html-export in export vault>")
+if(len(sys.argv)!=2 and len(sys.argv)!=3 and len(sys.argv)!=4):
+    print("Wrong number of arguments!\nUsage: python3 exportMdFileToHtml.py <filename.md> <[y/n](optional) y=default => creates a html-export in export vault> <[y/n](optional) y=default => download extrernal images locally>")
     quit()
 
 mainFileToExport = ""
@@ -22,9 +22,13 @@ for path in Path('.').rglob(fileToFind):
     mainFileToExport=path
 
 exportToHtml = True
-if(len(sys.argv) == 3 and str(sys.argv[2]).upper() == "N"):
-    print("Exporting: " + str(mainFileToExport) + " to vault")
-    exportToHtml = False
+downloadImages = True
+if len(sys.argv) >= 3:
+    if str(sys.argv[2]).upper() == "N":
+        print("Exporting: " + str(mainFileToExport) + " to vault")
+        exportToHtml = False
+    if len(sys.argv) == 4 and str(sys.argv[3]).upper() == "N":
+        downloadImages = False
 else:
     print("Exporting: " + str(mainFileToExport) + " + creates a html-copy in vault")
 
@@ -40,7 +44,7 @@ if os.path.exists(exportDir) and os.path.isdir(exportDir):
     shutil.rmtree(exportDir)
 destFile = os.path.join(exportDir,mainFileToExport)
 Path(os.path.dirname(destFile)).mkdir(parents=True, exist_ok=True)
-assetPath = os.path.join(exportDir,"attachments","test")
+assetPath = os.path.join(exportDir,"downloaded_images","test")
 Path(os.path.dirname(assetPath)).mkdir(parents=True, exist_ok=True)
 copyfile(mainFileToExport, destFile)
 filesAllreadyCopied = [mainFileToExport]
@@ -76,7 +80,7 @@ def copyFileToExport(fileToFind, currentFile, traverse=False):
             readFilesRecursive(linkedFilePath)
         return findRelPath(linkedFilePath,currentFile)
 
-def findMdFile(line, currentFile, convertHtml=True):
+def findMdFile(line, currentFile):
     pattern = re.compile(r"(?<!!)\[\[([^\]]*)\]\]")
     for (file) in re.findall(pattern, line):
         fileOnly = file.split("#")[0] 
@@ -85,7 +89,7 @@ def findMdFile(line, currentFile, convertHtml=True):
         if(len(file.split("#"))>1):
             ancor = "#" + file.split("#")[1].replace(" ","_").replace("(","").replace(")","")
         newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
-        if(convertHtml):
+        if(exportToHtml):
             if(newFile and len(newFile)>0):
                 line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.replace("\\","/").split("/")[-1].replace(".md","") + ancor + '</a>')
             else: ##self ref
@@ -93,13 +97,13 @@ def findMdFile(line, currentFile, convertHtml=True):
     return line
 
 seed(1)
-def findImages(line, currentFile, convertHtml=True):
+def findImages(line, currentFile):
     antalAssets = 0
     pattern = re.compile(r"!\[\[([^\]]*)\]\]")
     for (asset) in re.findall(pattern, line):
         antalAssets += 1
         img = str(copyFileToExport(asset.split("|")[0], currentFile))
-        if(convertHtml):
+        if(exportToHtml):
             style = 'border-radius: 4px;"'
             if('|' in asset):
                 style = style + 'width:' + asset.split('|')[1] + 'px; border-radius: 3px;'
@@ -108,7 +112,7 @@ def findImages(line, currentFile, convertHtml=True):
     pattern = re.compile(r"!\[(.*)\]\((.*)\)")
     for size,imglink in re.findall(pattern,line):
         antalAssets += 1
-        if(convertHtml):
+        if(exportToHtml):
             if("http" not in imglink):
                 originallink = imglink
                 imglink = str(copyFileToExport(unquote(imglink.replace("\\","/").split("/")[-1]), currentFile))
@@ -117,15 +121,18 @@ def findImages(line, currentFile, convertHtml=True):
                 if('|' in imglink):
                     style = style + 'width:' + imglink.split('|')[1] + 'px; border-radius: 3px;'
                 line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
-            else:
+            elif downloadImages:
                 imgname = 'utl_download_' + str(randint(0,10000)) + imglink.split("/")[-1]
-                destFile = os.path.join(exportDir,"attachments",imgname)
+                destFile = os.path.join(exportDir,"downloaded_images",imgname)
                 with urllib.request.urlopen(imglink) as responese:
                     with open(destFile,'wb') as fdest:
                         copyfileobj(responese, fdest)
                 
                 style = 'border-radius: 4px;"'
-                line = line.replace("![" + size + "](" + imglink + ")", '<img src="../attachments/' + imgname + '" style="' + style + '" >')
+                line = line.replace("![" + size + "](" + imglink + ")", '<img src="../downloaded_images/' + imgname + '" style="' + style + '" >')
+            else:
+                style = 'border-radius: 4px;"'
+                line = line.replace("![" + size + "](" + imglink + ")", '<img src="' + imglink + '" style="' + style + '" >')
     
     
     return (line, antalAssets)
@@ -134,14 +141,15 @@ def findExternalLinks(line):
     pattern = re.compile(r"\[([^\[]*)\]\(([^\[\s]*)\)")
 
     for (text, link) in re.findall(pattern, line):
-        line = line.replace("[" + text + "](" + link + ")",'<a href="' + link + '" target=”_blank”>' + text + "</a>")
+        line = line.replace("[" + text + "](" + link + ")",'<a href="' + link + '" target="_blank">' + text + "</a>")
     return line
 
 def findLinkInText(line):
-    pattern = re.compile(r"((?<!(?:\"|\>|\())https{0,1}.*?)[ \n]") #?=>un-greedy, (?<!...) = negative look behind
+    pattern = re.compile(r"((?<!(?:\"|\(|\[))https{0,1}.*?)[ \n]") #?=>un-greedy, (?<!...) = negative look behind
 
     for (link) in re.findall(pattern, line):
-        line = line.replace(link,'<a href="' + link.strip() + '" target=”_blank”>' + link + "</a>")
+        line = line.replace(link,'<a href="' + link.strip() + '" target="_blank">' + link + "</a>")
+    
     return line
 
 def findCheckboxes(line):
@@ -285,12 +293,12 @@ def readFilesRecursive(path):
                         (line, a) = findImages(line, currentFile=path)
                         antalAssets += a
                         line = findInlineCodeBlocks(line)
+                        line = findLinkInText(line)
                         line = findExternalLinks(line)
                         line = findCheckboxes(line)
                         line = findBolds(line)
                         line = findHeadings(line)
                         line = findListItems(line)
-                        line = findLinkInText(line)
                         line = insertParagraphs(line)
                         
                     
@@ -309,8 +317,8 @@ def readFilesRecursive(path):
 
     else:
         for line in data:
-            findMdFile(line, currentFile=path, convertHtml=False)
-            (line, a) = findImages(line, currentFile=path, convertHtml=False)
+            findMdFile(line, currentFile=path)
+            (line, a) = findImages(line, currentFile=path)
             antalAssets += a
     
     print("Exported: " + str(path) + (" (" + str(antalAssets) + " images)" if antalAssets>0 else ''))
