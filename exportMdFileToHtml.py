@@ -161,6 +161,17 @@ def findCodeBlock(line, InCodeBlock):
         InCodeBlock = not InCodeBlock
     return (line, InCodeBlock)
 
+def findCommentBlock(line, InCommentBlock):
+    pattern = re.compile(r"(%%.*%%)")
+    for (inlineComment) in re.findall(pattern, line):
+        line = line.replace(inlineComment,'')
+
+    if "%%" in line:
+        InCommentBlock = not InCommentBlock
+        line = ''
+
+    return (line, InCommentBlock)
+
 def leftMargin(line):
     margin = 0
     for c in line:
@@ -253,6 +264,7 @@ def readFilesRecursive(path):
             
             outputfile.write('<div style="width:1000px; padding:20px; margin:0px; z-index: 5; text-align:left; background-color: #DCDCDC; border-radius: 5px; position:absolute; top:0; left:340px;">\n')
             InCodeBlock = False
+            InComment = False
             for line in data:
                 if(not InCodeBlock):
                     line = findInlineCodeBlockswrongly(line)
@@ -260,18 +272,26 @@ def readFilesRecursive(path):
                 (line, InCodeBlock) = findCodeBlock(line, InCodeBlock)
                 
                 if(not InCodeBlock):
-                    line = findLines(line)
-                    line = findMdFile(line, currentFile=path)
-                    (line, a) = findImages(line, currentFile=path)
-                    antalAssets += a
-                    line = findInlineCodeBlocks(line)
-                    line = findExternalLinks(line)
-                    line = findCheckboxes(line)
-                    line = findBolds(line)
-                    line = findHeadings(line)
-                    line = findListItems(line)
-                    line = findLinkInText(line)
-                    line = insertParagraphs(line)
+                    if InComment:
+                        (line, InComment) = findCommentBlock(line, InComment)
+                        line=''
+                    else:
+                        (line, InComment) = findCommentBlock(line, InComment)
+                        if(InComment):
+                            continue
+                        line = findLines(line)
+                        line = findMdFile(line, currentFile=path)
+                        (line, a) = findImages(line, currentFile=path)
+                        antalAssets += a
+                        line = findInlineCodeBlocks(line)
+                        line = findExternalLinks(line)
+                        line = findCheckboxes(line)
+                        line = findBolds(line)
+                        line = findHeadings(line)
+                        line = findListItems(line)
+                        line = findLinkInText(line)
+                        line = insertParagraphs(line)
+                        
                     
                 elif("<code" not in line):
                     line = html.escape(line)
