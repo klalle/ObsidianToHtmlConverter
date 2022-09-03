@@ -106,7 +106,10 @@ def findImages(line, currentFile):
         if(exportToHtml):
             style = 'border-radius: 4px;"'
             if('|' in asset):
-                style = style + 'width:' + asset.split('|')[1] + 'px; border-radius: 3px;'
+                width=asset.split('|')[1]
+                style = 'width:' + width + 'px; border-radius: 3px;'
+                sys.stdout.print("for image %s, width is %s"%(asset, width))
+
             line = line.replace("![[" + asset + "]]", '<img src="./' + img + '" alt="' + img.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
     
     pattern = re.compile(r"!\[(.*)\]\((.*)\)")
@@ -114,12 +117,14 @@ def findImages(line, currentFile):
         antalAssets += 1
         if(exportToHtml):
             if("http" not in imglink):
+                sys.stdout.write("found image %s with size %s\n" % (imglink, size))
                 originallink = imglink
                 imglink = str(copyFileToExport(unquote(imglink.replace("\\","/").split("/")[-1]), currentFile))
                 
                 style = 'border-radius: 4px;"'
-                if('|' in imglink):
-                    style = style + 'width:' + imglink.split('|')[1] + 'px; border-radius: 3px;'
+                if(size):
+                    style = 'width:' + size + 'px; border-radius: 3px;'
+                    # sys.stdout.write("For image %s, width is %s\n"%(imglink, size))
                 line = line.replace("![" + size + "](" + originallink + ")", '<img src="./' + imglink + '" alt="' + imglink.replace("\\","/").split("/")[-1] + '" style="' + style + '" >')
             elif downloadImages:
                 imgname = 'utl_download_' + str(randint(0,10000)) + imglink.split("/")[-1]
