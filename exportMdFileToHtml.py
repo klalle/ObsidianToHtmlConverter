@@ -83,12 +83,17 @@ def copyFileToExport(fileToFind, currentFile, traverse=False):
 def findMdFile(line, currentFile):
     pattern = re.compile(r"(?<!!)\[\[([^\]]*)\]\]")
     for (file) in re.findall(pattern, line):
-        fileOnly = file.split("#")[0] 
-            
+        fileOnly = file.split("#")[0].split("|")[0]
+        newFile = None
+        print("file: " + file  + " parh: " + Path(currentFile).name)
         ancor = ""
         if(len(file.split("#"))>1):
             ancor = "#" + file.split("#")[1].replace(" ","_").replace("(","").replace(")","")
-        newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
+        if(ancor != "" and fileOnly == ""):
+            fileOnly = Path(currentFile).name.replace(".md","")
+        else:
+            newFile = copyFileToExport(fileOnly + '.md', currentFile, traverse=True) 
+        
         if(exportToHtml):
             if(newFile and len(newFile)>0):
                 line = line.replace('[[' + file + ']]','<a href="./' + newFile + ".html" + ancor + '">' + newFile.replace("\\","/").split("/")[-1].replace(".md","") + ancor + '</a>')
@@ -138,7 +143,7 @@ def findImages(line, currentFile):
     return (line, antalAssets)
 
 def findExternalLinks(line):
-    pattern = re.compile(r"\[([^\[]*)\]\(([^\[\s]*)\)")
+    pattern = re.compile(r"\[([^\[]*)\]\(([^\[\s\)]*)\)")
 
     for (text, link) in re.findall(pattern, line):
         line = line.replace("[" + text + "](" + link + ")",'<a href="' + link + '" target="_blank">' + text + "</a>")
@@ -204,12 +209,12 @@ def findBolds(line):
 
 def findHeadings(line):
     pattern = re.compile(r"^([\t]*)[\- ]*([#]{1,}) ([^<]{1,})")
-    linkHeading = re.compile(r"^([\t]*)[\- ]*([#]{1,}) (<a href.*>([^\/]*)<\/a>)(.*)")
+    linkHeading = re.compile(r"^([\t]*)[\- ]*([#]{1,})(.*)(<a href.*>([^\/]*)<\/a>)(.*)")
     
-    for (tab, heading, link, text, aftertext) in re.findall(linkHeading, line):
+    for (tab, heading, beforetext, link, text, aftertext) in re.findall(linkHeading, line):
         line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + (
-            (text + aftertext).strip().replace(" ","_").replace("(","").replace(")","").replace("#","_") + '">' 
-            + link + aftertext + '</h' + str(len(heading)) + '>\n')
+            (beforetext + text + aftertext).strip().replace(" ","_").replace("(","").replace(")","").replace("#","_") + '">' 
+            + beforetext + link + aftertext + '</h' + str(len(heading)) + '>\n')
 
     for (tab, heading, text) in re.findall(pattern, line):
         line = '<h' + str(len(heading)) + ' style="margin-left:' + str(len(tab) * 20) + 'px;" id="' + text.strip().replace(" ","_").replace("(","").replace(")","")  + '">' + text + '</h' + str(len(heading)) + '>\n'
@@ -229,6 +234,7 @@ def findInlineCodeBlockswrongly(line):
     for (text) in re.findall(pattern, line):
         line = line.replace('```' + text + '```', '<code class="inlineCoed">' + html.escape(text) + '</code>')
     return line
+    
 def insertParagraphs(line):
     line = line.replace("\n","")
     if('<h' not in line and '</pre></code>' not in line):
